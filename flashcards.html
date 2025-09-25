@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Math Flash Cards for Kids</title>
+  <style>
+    body {
+      font-family: 'Comic Sans MS', cursive;
+      background: linear-gradient(to bottom right, #a1c4fd, #c2e9fb);
+      text-align: center;
+      padding: 20px;
+    }
+
+    .container {
+      max-width: 500px;
+      margin: auto;
+      background: #fff;
+      border-radius: 10px;
+      padding: 20px;
+      box-shadow: 0 0 10px #ccc;
+    }
+
+    h1 {
+      font-size: 28px;
+      margin-bottom: 10px;
+    }
+
+    .mode-selector button {
+      margin: 5px;
+      padding: 10px 20px;
+      font-size: 18px;
+      cursor: pointer;
+      border: none;
+      border-radius: 5px;
+      background-color: #add8e6;
+    }
+
+    .mode-selector button:hover {
+      background-color: #87ceeb;
+    }
+
+    .flash-card {
+      margin-top: 20px;
+    }
+
+    #question {
+      font-size: 24px;
+      margin: 15px 0;
+    }
+
+    input[type="number"], input[type="password"] {
+      padding: 10px;
+      font-size: 16px;
+      width: 80%;
+      margin-bottom: 10px;
+      border-radius: 5px;
+      border: 1px solid #ccc;
+    }
+
+    button.check, button.reset {
+      padding: 10px 20px;
+      font-size: 16px;
+      cursor: pointer;
+      border: none;
+      border-radius: 5px;
+    }
+
+    button.check {
+      background-color: #90ee90;
+    }
+
+    button.check:hover {
+      background-color: #32cd32;
+    }
+
+    button.reset {
+      background-color: #ffcccb;
+      margin-top: 10px;
+    }
+
+    button.reset:hover {
+      background-color: #f08080;
+    }
+
+    #feedback {
+      font-size: 18px;
+      margin-top: 10px;
+    }
+
+    canvas {
+      margin-top: 20px;
+      border: 1px solid #ccc;
+      background-color: #fff;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🧠 Math Flash Cards</h1>
+    <div class="mode-selector">
+      <button onclick="setMode('add')">➕ Add</button>
+      <button onclick="setMode('subtract')">➖ Subtract</button>
+      <button onclick="setMode('multiply')">✖️ Multiply</button>
+      <button onclick="setMode('divide')">➗ Divide</button>
+    </div>
+    <div class="flash-card">
+      <p id="question">Press a mode to start!</p>
+      <input type="number" id="answer" placeholder="Your answer" />
+      <br />
+      <button class="check" onclick="checkAnswer()">Check</button>
+      <p id="feedback"></p>
+    </div>
+
+    <h2>📅 Practice Tracker</h2>
+    <canvas id="practiceChart" width="400" height="200"></canvas>
+    <input type="password" id="pinInput" placeholder="Enter PIN to reset" />
+    <br />
+    <button class="reset" onclick="resetPractice()">🔄 Reset Chart</button>
+  </div>
+
+ <script>
+  let mode = null;
+  let num1 = 0;
+  let num2 = 0;
+
+  function setMode(selectedMode) {
+    mode = selectedMode;
+    generateQuestion();
+    document.getElementById('feedback').textContent = '';
+  }
+
+  function generateQuestion() {
+    num1 = Math.floor(Math.random() * 10) + 1;
+    num2 = Math.floor(Math.random() * 10) + 1;
+
+    if (mode === 'subtract' && num2 > num1) [num1, num2] = [num2, num1];
+    if (mode === 'divide') num1 = num1 * num2;
+
+    const symbols = { add: '+', subtract: '-', multiply: '×', divide: '÷' };
+    document.getElementById('question').textContent = `${num1} ${symbols[mode]} ${num2} = ?`;
+  }
+
+  function makeBlocks(count) {
+    return '🟦'.repeat(count);
+  }
+
+  function checkAnswer() {
+    const userAnswer = parseFloat(document.getElementById('answer').value);
+    let correctAnswer, explanation;
+
+    switch (mode) {
+      case 'add':
+        correctAnswer = num1 + num2;
+        explanation = `
+          ${num1} blocks: ${makeBlocks(num1)}<br>
+          + ${num2} blocks: ${makeBlocks(num2)}<br>
+          = ${correctAnswer} blocks: ${makeBlocks(correctAnswer)}
+        `;
+        break;
+      case 'subtract':
+        correctAnswer = num1 - num2;
+        explanation = `
+          Start with ${num1} blocks: ${makeBlocks(num1)}<br>
+          Take away ${num2} blocks: ${makeBlocks(num2)}<br>
+          Left with ${correctAnswer} blocks: ${makeBlocks(correctAnswer)}
+        `;
+        break;
+      case 'multiply':
+        correctAnswer = num1 * num2;
+        explanation = `
+          ${num1} groups of ${num2} blocks:<br>
+          ${Array(num1).fill(makeBlocks(num2)).join('<br>')}<br>
+          Total: ${correctAnswer} blocks: ${makeBlocks(correctAnswer)}
+        `;
+        break;
+      case 'divide':
+        correctAnswer = num1 / num2;
+        explanation = `
+          Split ${num1} blocks into ${num2} groups:<br>
+          Each group gets ${correctAnswer} blocks: ${makeBlocks(correctAnswer)}
+        `;
+        break;
+    }
+
+    const feedback = document.getElementById('feedback');
+    if (userAnswer === correctAnswer) {
+      feedback.textContent = '✅ Correct!';
+      feedback.style.color = 'green';
+    } else {
+      feedback.innerHTML = `
+        ❌ Try again!<br>
+        <strong>Correct answer:</strong> ${correctAnswer}<br>
+        <strong>How to solve:</strong><br>${explanation}
+      `;
+      feedback.style.color = 'red';
+    }
+
+    updatePracticeCount();
+    generateQuestion();
+    document.getElementById('answer').value = '';
+  }
+
+  function updatePracticeCount() {
+    const today = new Date().toISOString().split('T')[0];
+    const data = JSON.parse(localStorage.getItem('practiceData') || '{}');
+    data[today] = (data[today] || 0) + 1;
+    localStorage.setItem('practiceData', JSON.stringify(data));
+    drawChart(data);
+  }
+
+  function drawChart(data) {
+    const canvas = document.getElementById('practiceChart');
+    const ctx = canvas.getContext('2d');
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    const days = [...Array(7)].map((_, i) => {
+      const d = new Date();
+      d.setDate(d.getDate() - (6 - i));
+      return d.toISOString().split('T')[0];
+    });
+
+    const counts = days.map(day => data[day] || 0);
+    const max = Math.max(...counts, 5);
+
+    ctx.fillStyle = '#000';
+    ctx.font = '14px sans-serif';
+    days.forEach((day, i) => {
+      const x = i * 55 + 20;
+      const y = canvas.height - 20;
+      const barHeight = (counts[i] / max) * 150;
+
+      ctx.fillStyle = '#87ceeb';
+      ctx.fillRect(x, y - barHeight, 40, barHeight);
+
+      ctx.fillStyle = '#000';
+      ctx.fillText(day.slice(5), x, y + 15);
+      ctx.fillText(counts[i], x + 10, y - barHeight - 5);
+    });
+  }
+
+  function resetPractice() {
+    const pin = document.getElementById('pinInput').value;
+    if (pin === '1234') {
+      localStorage.removeItem('practiceData');
+      drawChart({});
+      alert('Practice data reset!');
+      document.getElementById('pinInput').value = '';
+    } else {
+      alert('Incorrect PIN. Only adults can reset.');
+    }
+  }
+
+  window.onload = () => {
+    const data = JSON.parse(localStorage.getItem('practiceData') || '{}');
+    drawChart(data);
+  };
+</script>
+
+</body>
+</html>
